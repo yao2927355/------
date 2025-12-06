@@ -1,0 +1,1041 @@
+接口描述
+支持财务场景中13种常见票据的分类及结构化识别，包括增值税发票、卷票、机打发票、定额发票、火车票（含电子发票铁路电子客票）、出租车票、网约车行程单、飞机行程单（含电子发票航空电子客票行程单）、汽车票、过路过桥费、船票、机动车/二手车销售发票。支持多张不同种类票据在同一张图片上的混贴场景，可返回每张票据的位置、种类及票面信息的结构化识别结果。
+
+视频教程请参见 智能财务票据识别+增值税发票验真使用教程
+
+在线调试
+您可以在 示例代码中心 中调试该接口，可进行签名验证、查看在线调用的请求内容和返回结果、示例代码的自动生成。
+
+请求说明
+请求示例
+
+HTTP 方法：POST
+
+请求URL： https://aip.baidubce.com/rest/2.0/ocr/v1/multiple_invoice
+
+URL参数：
+
+参数	值
+access_token	通过API Key和Secret Key获取的access_token，参考“Access Token获取”
+Header如下：
+
+参数	值
+Content-Type	application/x-www-form-urlencoded
+Body中放置请求参数，参数详情如下：
+
+请求参数
+
+参数	是否必选	类型	可选值范围	说明
+image	和 url/pdf_file/ofd_file 四选一	string	-	图像数据，base64编码后进行urlencode，要求base64编码和urlencode后大小不超过4M，最短边至少15px，最长边最大4096px，支持jpg/jpeg/png/bmp格式
+优先级：image > url > pdf_file > ofd_file ，当image字段存在时，url、pdf_file、ofd_file 字段失效
+url	和 image/pdf_file/ofd_file 四选一	string	-	图片完整url，url长度不超过1024字节，url对应的图片base64编码后大小不超过4M，最短边至少15px，最长边最大4096px，支持jpg/jpeg/png/bmp格式
+优先级：image > url > pdf_file > ofd_file，当image字段存在时，url字段失效
+请注意关闭URL防盗链
+pdf_file	和 image/url/ofd_file 四选一	string	-	PDF文件，base64编码后进行urlencode，要求base64编码和urlencode后大小不超过4M，最短边至少15px，最长边最大4096px
+优先级：image > url > pdf_file > ofd_file，当image、url字段存在时，pdf_file字段失效
+pdf_file_num	否	string	-	需要识别的PDF文件的对应页码，当 pdf_file 参数有效时，识别传入页码的对应页面内容，若不传入，则默认识别第 1 页
+ofd_file	和 image/url/pdf_file 四选一	string	-	OFD文件，base64编码后进行urlencode，要求base64编码和urlencode后大小不超过4M，最短边至少15px，最长边最大4096px
+优先级：image > url > pdf_file > ofd_file，当image、url、pdf_file字段存在时，ofd_file字段失效
+ofd_file_num	否	string	-	需要识别的OFD文件的对应页码，当 ofd_file 参数有效时，识别传入页码的对应页面内容，若不传入，则默认识别第 1 页
+verify_parameter	否	string	true/false	是否开启验真，默认为 false，即不开启，当为 true 时，返回匹配发票验真接口所需的6要素信息，具体返回信息详见末尾说明
+probability	否	string	true/false	是否返回字段置信度，默认为 false ，即不返回
+location	否	string	true/false	是否返回字段位置坐标，默认为 false，即不返回
+请求代码示例
+
+提示一：使用示例代码前，请记得替换其中的示例Token、图片地址或Base64信息。
+
+提示二：部分语言依赖的类或库，请在代码注释中查看下载地址。
+
+copy code
+```bash label=Bash
+curl -i -k 'https://aip.baidubce.com/rest/2.0/ocr/v1/multiple_invoice?access_token=【调用鉴权接口获取的token】' --data 'image=【图片Base64编码，需UrlEncode】' -H 'Content-Type:application/x-www-form-urlencoded'
+```
+```python label=Python
+# encoding:utf-8
+
+import requests
+import base64
+
+'''
+智能财务票据识别
+'''
+
+request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/multiple_invoice"
+# 二进制方式打开图片文件
+f = open('[本地文件]', 'rb')
+img = base64.b64encode(f.read())
+
+params = {"image":img}
+access_token = '[调用鉴权接口获取的token]'
+request_url = request_url + "?access_token=" + access_token
+headers = {'content-type': 'application/x-www-form-urlencoded'}
+response = requests.post(request_url, data=params, headers=headers)
+if response:
+    print (response.json())
+
+```
+```java label=JAVA
+package com.baidu.ai.aip;
+
+import com.baidu.ai.aip.utils.Base64Util;
+import com.baidu.ai.aip.utils.FileUtil;
+import com.baidu.ai.aip.utils.HttpUtil;
+
+import java.net.URLEncoder;
+
+/**
+* 智能财务票据识别
+*/
+public class MultipleInvoice {
+
+    /**
+    * 重要提示代码中所需工具类
+    * FileUtil,Base64Util,HttpUtil,GsonUtils请从
+    * https://ai.baidu.com/file/658A35ABAB2D404FBF903F64D47C1F72
+    * https://ai.baidu.com/file/C8D81F3301E24D2892968F09AE1AD6E2
+    * https://ai.baidu.com/file/544D677F5D4E4F17B4122FBD60DB82B3
+    * https://ai.baidu.com/file/470B3ACCA3FE43788B5A963BF0B625F3
+    * 下载
+    */
+    public static String multipleInvoice() {
+        // 请求url
+        String url = "https://aip.baidubce.com/rest/2.0/ocr/v1/multiple_invoice";
+        try {
+            // 本地文件路径
+            String filePath = "[本地文件路径]";
+            byte[] imgData = FileUtil.readFileByBytes(filePath);
+            String imgStr = Base64Util.encode(imgData);
+            String imgParam = URLEncoder.encode(imgStr, "UTF-8");
+
+            String param = "image=" + imgParam;
+
+            // 注意这里仅为了简化编码每一次请求都去获取access_token，线上环境access_token有过期时间， 客户端可自行缓存，过期后重新获取。
+            String accessToken = "[调用鉴权接口获取的token]";
+
+            String result = HttpUtil.post(url, accessToken, param);
+            System.out.println(result);
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static void main(String[] args) {
+        MultipleInvoice.multipleInvoice();
+    }
+}
+```
+```cpp label=C++
+#include <iostream>
+#include <curl/curl.h>
+
+// libcurl库下载链接：https://curl.haxx.se/download.html
+// jsoncpp库下载链接：https://github.com/open-source-parsers/jsoncpp/
+const static std::string request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/multiple_invoice";
+static std::string multipleInvoice_result;
+/**
+* curl发送http请求调用的回调函数，回调函数中对返回的json格式的body进行了解析，解析结果储存在全局的静态变量当中
+* @param 参数定义见libcurl文档
+* @return 返回值定义见libcurl文档
+*/
+static size_t callback(void *ptr, size_t size, size_t nmemb, void *stream) {
+    // 获取到的body存放在ptr中，先将其转换为string格式
+    multipleInvoice_result = std::string((char *) ptr, size * nmemb);
+    return size * nmemb;
+}
+/**
+* 智能财务票据识别
+* @return 调用成功返回0，发生错误返回其他错误码
+*/
+int multipleInvoice(std::string &json_result, const std::string &access_token) {
+    std::string url = request_url + "?access_token=" + access_token;
+    CURL *curl = NULL;
+    CURLcode result_code;
+    int is_success;
+    curl = curl_easy_init();
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url.data());
+        curl_easy_setopt(curl, CURLOPT_POST, 1);
+        curl_httppost *post = NULL;
+        curl_httppost *last = NULL;
+        curl_formadd(&post, &last, CURLFORM_COPYNAME, "image", CURLFORM_COPYCONTENTS, "【base64_img】", CURLFORM_END);
+
+        curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
+        result_code = curl_easy_perform(curl);
+        if (result_code != CURLE_OK) {
+            fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                    curl_easy_strerror(result_code));
+            is_success = 1;
+            return is_success;
+        }
+        json_result = multipleInvoice_result;
+        curl_easy_cleanup(curl);
+        is_success = 0;
+    } else {
+        fprintf(stderr, "curl_easy_init() failed.");
+        is_success = 1;
+    }
+    return is_success;
+}
+
+```
+```php label=PHP
+<?php
+/**
+* 发起http post请求(REST API), 并获取REST请求的结果
+* @param string $url
+* @param string $param
+* @return - http response body if succeeds, else false.
+*/
+function request_post($url = '', $param = '')
+{
+    if (empty($url) || empty($param)) {
+        return false;
+    }
+
+    $postUrl = $url;
+    $curlPost = $param;
+    // 初始化curl
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, $postUrl);
+    curl_setopt($curl, CURLOPT_HEADER, 0);
+    // 要求结果为字符串且输出到屏幕上
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+    // post提交方式
+    curl_setopt($curl, CURLOPT_POST, 1);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, $curlPost);
+    // 运行curl
+    $data = curl_exec($curl);
+    curl_close($curl);
+
+    return $data;
+}
+
+$token = '[调用鉴权接口获取的token]';
+$url = 'https://aip.baidubce.com/rest/2.0/ocr/v1/multiple_invoice?access_token=' . $token;
+$img = file_get_contents('[本地文件路径]');
+$img = base64_encode($img);
+$bodys = array(
+    'image' => $img
+);
+$res = request_post($url, $bodys);
+
+var_dump($res);
+
+```
+```csharp label=C#
+using System;
+using System.IO;
+using System.Net;
+using System.Text;
+using System.Web;
+
+namespace com.baidu.ai
+{
+    public class MultipleInvoice
+    {
+        // 智能财务票据识别
+        public static string multipleInvoice()
+        {
+            string token = "[调用鉴权接口获取的token]";
+            string host = "https://aip.baidubce.com/rest/2.0/ocr/v1/multiple_invoice?access_token=" + token;
+            Encoding encoding = Encoding.Default;
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(host);
+            request.Method = "post";
+            request.KeepAlive = true;
+            // 图片的base64编码
+            string base64 = getFileBase64("[本地图片文件]");
+            String str = "image=" + HttpUtility.UrlEncode(base64);
+            byte[] buffer = encoding.GetBytes(str);
+            request.ContentLength = buffer.Length;
+            request.GetRequestStream().Write(buffer, 0, buffer.Length);
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.Default);
+            string result = reader.ReadToEnd();
+            Console.WriteLine("智能财务票据识别:");
+            Console.WriteLine(result);
+            return result;
+        }
+
+        public static String getFileBase64(String fileName) {
+            FileStream filestream = new FileStream(fileName, FileMode.Open);
+            byte[] arr = new byte[filestream.Length];
+            filestream.Read(arr, 0, (int)filestream.Length);
+            string baser64 = Convert.ToBase64String(arr);
+            filestream.Close();
+            return baser64;
+        }
+    }
+}
+
+```
+返回说明
+返回参数
+
+字段	是否必选	类型	说明
+log_id	是	uint64	唯一的log id，用于问题定位
+pdf_file_size	否	string	传入PDF文件的总页数，当 pdf_file 参数有效时返回该字段
+words_result_num	是	uint32	识别结果数，表示words_result的元素个数
+words_result	是	object{}	识别结果
++ probability	是	string	表示单张票据分类的置信度
++ left	是	string	表示单张票据定位位置的长方形左上顶点的水平坐标
++ top	是	string	表示单张票据定位位置的长方形左上顶点的垂直坐标
++ width	是	string	表示单张票据定位位置的长方形的宽度
++ height	是	string	表示单张票据定位位置的长方形的高度
++ type	是	string	每一张票据的种类
++ result	是	dict	单张票据的识别结果
+type 字段会返回以下17种结果，每种结果对应的票据类型详见下表			
+type 返回结果	说明
+vat_invoice	增值税发票
+taxi_receipt	出租车票
+train_ticket	火车票
+quota_invoice	定额发票
+air_ticket	飞机行程单
+roll_normal_invoice	卷票
+printed_invoice	机打发票
+printed_elec_invoice	机打电子发票
+bus_ticket	汽车票
+toll_invoice	过路过桥费发票
+ferry_ticket	船票
+motor_vehicle_invoice	机动车销售发票
+used_vehicle_invoice	二手车发票
+taxi_online_ticket	网约车行程单
+limit_invoice	限额发票
+shopping_receipt	购物小票
+pos_invoice	POS小票
+others	其他
+返回说明-增值税发票
+type 的返回结果为 vat_invoice，即“增值税发票”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ ServiceType	是	array[]	发票消费类型。**不同消费类型输出：**餐饮、电器设备、通讯、服务、日用品食品、医疗、交通、其他
+++ InvoiceTypeOrg	是	array[]	发票名称
+++ InvoiceType	是	array[]	增值税发票的细分类型。 **不同细分类型的发票输出：**普通发票、专用发票、电子普通发票、电子专用发票、通行费电子普票、区块链发票、通用机打电子发票、电子发票(专用发票)、电子发票(普通发票)
+++ InvoiceTag	是	array[]	增值税发票左上角标志。 包含：通行费、销项负数、代开、收购、成品油、其他
+++ InvoiceCode	是	array[]	发票代码
+++ InvoiceNum	是	array[]	发票号码
+++ InvoiceCodeConfirm	是	array[]	发票代码的辅助校验码，一般业务情景可忽略
+++ InvoiceNumConfirm	是	array[]	发票号码的辅助校验码，一般业务情景可忽略
+++ CheckCode	是	array[]	校验码。增值税专票无此参数
+++ InvoiceNumDigit	是	array[]	数电票号码。密码区部分的数电票号码，仅在纸质的数电票上出现
+++ InvoiceDate	是	array[]	开票日期
+++ PurchaserName	是	array[]	购方名称
+++ PurchaserRegisterNum	是	array[]	购方纳税人识别号
+++ PurchaserAddress	是	array[]	购方地址及电话
+++ PurchaserBank	是	array[]	购方开户行及账号
+++ Password	是	array[]	密码区
+++ Province	是	array[]	省
+++ City	是	array[]	市
+++ SheetNum	是	array[]	联次信息。专票第一联到第三联分别输出：第一联：记账联、第二联：抵扣联、第三联：发票联；普通发票第一联到第二联分别输出：第一联：记账联、第二联：发票联
+++ Agent	是	array[]	是否代开
+++ OnlinePay	是	String	电子支付标识。仅区块链发票含有此参数
+++ SellerName	是	array[]	销售方名称
+++ SellerRegisterNum	是	array[]	销售方纳税人识别号
+++ SellerAddress	是	array[]	销售方地址及电话
+++ SellerBank	是	array[]	销售方开户行及账号
+++ TotalAmount	是	array[]	合计金额
+++ TotalTax	是	array[]	合计税额
+++ AmountInWords	是	array[]	价税合计(大写)
+++ AmountInFiguers	是	array[]	价税合计(小写)
+++ Payee	是	array[]	收款人
+++ Checker	是	array[]	复核
+++ NoteDrawer	是	array[]	开票人
+++ Remarks	是	array[]	备注
++++ word	是	string	识别结果字符串，以上各字段均包含
+++ CommodityName	是	array[]	货物名称
+++ CommodityType	是	array[]	规格型号
+++ CommodityUnit	是	array[]	单位
+++ CommodityNum	是	array[]	数量
+++ CommodityPrice	是	array[]	单价
+++ CommodityAmount	是	array[]	金额
+++ CommodityTaxRate	是	array[]	税率
+++ CommodityTax	是	array[]	税额
+++ CommodityPlateNum	是	array[]	车牌号。仅通行费增值税电子普通发票含有此参数，其余类型该参数返回为空
+++ CommodityVehicleType	是	array[]	类型。仅通行费增值税电子普通发票含有此参数，其余类型该参数返回为空
+++ CommodityStartDate	是	array[]	通行日期起。仅通行费增值税电子普通发票含有此参数，其余类型该参数返回为空
+++ CommodityEndDate	是	array[]	通行日期止。仅通行费增值税电子普通发票含有此参数，其余类型该参数返回为空
+++ PassengName	是	array[]	出行人。仅旅客运输类发票有此参数，其余类型该参数返回为空
+++ PassengIdNum	是	array[]	有效身份证件号，仅旅客运输类发票有此参数，其余类型该参数返回为空
+++ PassengDate	是	array[]	出行日期。仅旅客运输类发票有此参数，其余类型该参数返回为空
+++ PassengOrigin	是	array[]	出发地。仅旅客运输类发票有此参数，其余类型该参数返回为空
+++ PassengDestination	是	array[]	到达地。仅旅客运输类发票有此参数，其余类型该参数返回为空
+++ PassengClass	是	array[]	等级。仅旅客运输类发票有此参数，其余类型该参数返回为空
+++ PassengVehicleType	是	array[]	交通工具类型。仅旅客运输类发票有此参数，其余类型该参数返回为空
+++ TransportType	是	array[]	运输工具种类。仅货物运输类发票有此参数，其余类型该参数返回为空
+++ TransportPlateNum	是	array[]	运输工具牌号。仅货物运输类发票有此参数，其余类型该参数返回为空
+++ TransportDeparture	是	array[]	起运地。仅货物运输类发票有此参数，其余类型该参数返回为空
+++ TransportArrival	是	array[]	到达地。仅货物运输类发票有此参数，其余类型该参数返回为空
+++ TransportCargoInfo	是	array[]	运输货物名称。仅货物运输类发票有此参数，其余类型该参数返回为空
++++ row	是	uint32	行号，以上各字段均包含
++++ word	是	string	内容，以上各字段均包含
+返回说明-出租车票
+type 的返回结果为 taxi_receipt，即“出租车票”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ ServiceType	是	array[]	发票消费类型。出租车票此字段固定输出：交通
+++ InvoiceCode	是	array[]	发票代号
+++ InvoiceNum	是	array[]	发票号码
+++ TaxiNum	是	array[]	车牌号
+++ Date	是	array[]	日期
+++ Time	是	array[]	上下车时间
+++ PickupTime	是	array[]	上车时间
+++ DropoffTime	是	array[]	下车时间
+++ Fare	是	array[]	金额
+++ FuelOilSurcharge	是	array[]	燃油附加费
+++ CallServiceSurcharge	是	array[]	叫车服务费
+++ TotalFare	是	array[]	总金额
+++ Location	是	array[]	开票城市
+++ Province	是	array[]	省
+++ City	是	array[]	市
+++ PricePerkm	是	array[]	单价
+++ Distance	是	array[]	里程
++++ word	是	string	识别结果字符串，以上各字段均包含
+返回说明-火车票
+type 的返回结果为 train_ticket，即“火车票”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ ServiceType	是	array[]	发票消费类型。火车票此字段固定输出：交通
+++ ticket_num	是	array[]	车票号
+++ starting_station	是	array[]	始发站
+++ train_num	是	array[]	车次号
+++ destination_station	是	array[]	到达站
+++ date	是	array[]	出发日期
+++ ticket_rates	是	array[]	车票金额，当火车票为退票时，该字段表示退票费
+++ seat_category	是	array[]	席别
+++ name	是	array[]	乘客姓名
+++ ID_card	是	array[]	身份证号
+++ serial_number	是	array[]	序列号
+++ sales_station	是	array[]	售站
+++ time	是	array[]	时间
+++ seat_num	是	array[]	座位号
+++ Waiting_area	是	array[]	候检区
+++ refund_flag	否	array[]	标识，仅在输入为铁路电子客票时返回值，包括“退票”、“换开”、“始发改签”等
+++ invoice_num	否	array[]	发票号码
+++ invoice_date	否	array[]	开票日期
+++ fare	否	array[]	不含税金额
+++ tax_rate	否	array[]	税率
+++ tax	否	array[]	税额
+++ elec_ticket_num	否	array[]	电子客票号
+++purchaser_name	否	array[]	购买方名称
+++purchaser_register_num	否	array[]	购买方统一社会信用代码
++++ word	是	string	识别结果字符串，以上各字段均包含
+返回说明-定额发票
+type 的返回结果为 quota_invoice，即“定额发票”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ ServiceType	是	array[]	发票消费类型。定额发票此字段固定输出：交通
+++ invoice_code	是	array[]	发票代码
+++ invoice_number	是	array[]	发票号码
+++ invoice_rate	是	array[]	金额
+++ invoice_rate_in_figure	是	array[]	金额小写
+++ invoice_rate_in_word	是	array[]	金额大写
+++ Province	是	array[]	省
+++ City	是	array[]	市
+++ Location	是	array[]	发票所在地
+++ invoice_type	是	array[]	发票名称
++++ word	是	string	识别结果字符串，以上各字段均包含
+返回说明-飞机行程单
+type 的返回结果为 air_ticket，即“飞机行程单”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ ServiceType	是	array[]	发票消费类型。飞机行程单此字段固定输出：交通
+++ name	是	array[]	姓名
+++ starting_station	是	array[]	始发站
+++ destination_station	是	array[]	目的站
+++ flight	是	array[]	航班号
+++ date	是	array[]	日期
+++ ticket_number	是	array[]	电子客票号码
+++ fare	是	array[]	票价
+++ dev_fund	是	array[]	民航发展基金/机建费
+++ oil_money	是	array[]	燃油附加费
+++ other_tax	是	array[]	其他税费
+++ ticket_rates	是	array[]	合计金额
+++ start_date	是	array[]	填开日期
+++ id_no	是	array[]	身份证号
+++ carrier	是	array[]	承运人
+++ time	是	array[]	时间
+++ issued_by	是	array[]	填开单位
+++ serial_number	是	array[]	印刷序号
+++ insurance	是	array[]	保险费
+++ fare_basis	是	array[]	客票级别
+++ class	是	array[]	座位等级
+++ agent_code	是	array[]	销售单位号
+++ endorsement	是	array[]	签注
+++ allow	是	array[]	免费行李
+++ ck	是	array[]	验证码
+++ effective_date	是	array[]	客票生效日期
+++ expiration_date	是	array[]	有效期截止日期
+++ invoice_type_org	是	array[]	发票名称
+++ identification	是	array[]	国内国际标识
+++ invoice_status	是	array[]	开票状态
+++ invoice_num	是	array[]	发票号码
+++ commodity_tax_rate	是	array[]	增值税税率
+++ commodity_tax	是	array[]	增值税税额
+++ purchaser_name	是	array[]	购买方名称
+++ purchaser_register_num	是	array[]	统一社会信用代码/纳税人识别号
+++ tip	是	array[]	提示信息
++++ word	是	string	识别结果字符串，以上各字段均包含
+返回说明-卷票
+type 的返回结果为 roll_normal_invoice，即“卷票”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ InvoiceType	是	array[]	发票名称
+++ InvoiceCode	是	array[]	发票代码
+++ InvoiceNum	是	array[]	发票号码
+++ MachineNum	是	array[]	机打号码。仅增值税卷票含有此参数
+++ MachineCode	是	array[]	机器编号。仅增值税卷票含有此参数
+++ InvoiceDate	是	array[]	开票日期
+++ PurchaserName	是	array[]	购方名称
+++ PurchaserRegisterNum	是	array[]	购方纳税人识别号
+++ SellerName	是	array[]	销售方名称
+++ SellerRegisterNum	是	array[]	销售方纳税人识别号
+++ TotalTax	是	array[]	价税合计
+++ AmountInWords	是	array[]	合计金额(大写)
+++ AmountInFiguers	是	array[]	合计金额(小写)
+++ Payee	是	array[]	收款人
+++ CheckCode	是	array[]	校验码。增值税专票无此参数
+++ Province	是	array[]	省
+++ City	是	array[]	市
++++ word	是	string	识别结果字符串，以上各字段均包含
+++ CommodityName	是	array[]	货物名称
+++ CommodityNum	是	array[]	数量
+++ CommodityPrice	是	array[]	单价
+++ CommodityAmount	是	array[]	金额
++++ row	是	uint32	行号，以上各字段均包含
++++ word	是	string	内容，以上各字段均包含
+返回说明-机打发票
+type 的返回结果为 printed_invoice，即“机打发票”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ ServiceType	是	array[]	发票消费类型。不同消费类型输出：餐饮、电器设备、通讯、服务、日用品食品、医疗、交通、其他
+++ InvoiceType	是	array[]	发票类型
+++ InvoiceCode	是	array[]	发票代码
+++ InvoiceNum	是	array[]	发票号码
+++ InvoiceDate	是	array[]	开票日期
+++ AmountInFiguers	是	array[]	合计金额小写
+++ AmountInWords	是	array[]	合计金额大写
+++ MachineNum	是	array[]	机打号码
+++ CheckCode	是	array[]	校验码
+++ SellerName	是	array[]	销售方名称
+++ SellerRegisterNum	是	array[]	销售方纳税人识别号
+++ PurchaserName	是	array[]	购买方名称
+++ PurchaserRegisterNum	是	array[]	购买方纳税人识别号
+++ TotalTax	是	array[]	合计税额
+++ Province	是	array[]	省
+++ City	是	array[]	市
+++ Time	是	array[]	时间
+++ SheetNum	是	array[]	联次
++++ word	是	string	识别结果字符串，以上各字段均包含
+++ CommodityName	是	array[]	商品名称
+++ CommodityUnit	是	array[]	商品单位
+++ CommodityPrice	是	array[]	商品单价
+++ CommodityNum	是	array[]	商品数量
+++ CommodityAmount	是	array[]	商品金额
++++ row	是	uint32	行号，以上各字段均包含
++++ word	是	string	内容，以上各字段均包含
+返回说明-汽车票
+type 的返回结果为 bus_ticket，即“汽车票”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ ServiceType	是	array[]	发票消费类型。汽车票此字段固定输出：交通
+++ InvoiceCode	是	array[]	发票代码
+++ InvoiceNum	是	array[]	发票号码
+++ Date	是	array[]	日期
+++ Time	是	array[]	时间
+++ ExitStation	是	array[]	出发站
+++ Amount	是	array[]	金额
+++ IdCard	是	array[]	身份证号
+++ ArrivalStation	是	array[]	到达站
+++ Name	是	array[]	姓名
+++ InvoiceTime	是	array[]	开票日期
++++ word	是	string	识别结果字符串，以上各字段均包含
+返回说明-过路过桥费
+type 的返回结果为 toll_invoice，即“过路过桥费”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ ServiceType	是	array[]	发票消费类型。过路过桥费此字段固定输出：交通
+++ InvoiceCode	是	array[]	发票代码
+++ InvoiceNum	是	array[]	发票号码
+++ Entrance	是	array[]	入口
+++ Exit	是	array[]	出口
+++ OutDate	是	array[]	日期
+++ OutTime	是	array[]	时间
+++ TotalAmount	是	array[]	金额
+++ Province	是	array[]	省
+++ City	是	array[]	市
++++ word	是	string	识别结果字符串，以上各字段均包含
+返回说明-船票
+type 的返回结果为 ferry_ticket，即“船票”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ ServiceType	是	array[]	发票消费类型。船票此字段固定输出：交通
+++ InvoiceType	是	array[]	发票类型
+++ InvoiceCode	是	array[]	发票代码
+++ InvoiceNum	是	array[]	发票号码
+++ ExitStation	是	array[]	出发地点
+++ ArrivalStation	是	array[]	到达地点
+++ Amount	是	array[]	总金额
+++ Date	是	array[]	开票日期
+++ MoneyType	是	array[]	金额类型
+++ BarCode	是	array[]	条码
+++ BarCodeNum	是	array[]	条码编号
+++ City	是	array[]	市
+++ Province	是	array[]	省
+++ InvoiceTitle	是	array[]	发票抬头，这里指该张船票的运行公司名
+++ QrCode	是	array[]	二维码
+++ Time	是	array[]	出发时间
+++ TicketTime	是	array[]	制票时间
+++ TicketDate	是	array[]	制票日期
+++ PassengerName	是	array[]	乘客姓名
+++ IdCard	是	array[]	乘客身份证号
++++ word	是	string	识别结果字符串，以上各字段均包含
+返回说明-机动车销售发票
+type 的返回结果为 motor_vehicle_invoice，即“机动车销售发票”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ date	是	array[]	开票日期
+++ fapiao-daima	是	array[]	发票代码/机打代码
+++ fapiao-haoma	是	array[]	发票号码/机打号码
+++ printed-daima	是	array[]	机打代码
+++ printed-haoma	是	array[]	机打号码
+++ machine-num	是	array[]	机器编号
+++ buyer-name	是	array[]	购买方名称
+++ payer-tax-num	是	array[]	购买方身份证号码/组织机构代码
+++ car-class	是	array[]	车辆类型
+++ car-model	是	array[]	厂牌型号
+++ product-location	是	array[]	产地
+++ certificate-num	是	array[]	合格证号
+++ engine-num	是	array[]	发动机号码
+++ vin-num	是	array[]	车架号码
+++ price-tax-big	是	array[]	价税合计
+++ price-tax-small	是	array[]	价税合计小写
+++ saler	是	array[]	销货单位名称
+++ saler-phone	是	array[]	销货单位电话
+++ saler-tax-num	是	array[]	销货单位纳税人识别号
+++ saler-bank-num	是	array[]	销货单位账号
+++ saler-address	是	array[]	销货单位地址
+++ saler-bank	是	array[]	销货单位开户银行
+++ tax-rate	是	array[]	税率
+++ tax	是	array[]	税额
+++ tax-jiguan	是	array[]	主管税务机关
+++ tax-jiguan-daima	是	array[]	主管税务机关代码
+++ price	是	array[]	不含税价格
+++ limit-mount	是	array[]	限乘人数
+++ toonage	是	array[]	吨位
+++ sheet-num	是	array[]	联次
+++ drawer	是	array[]	开票人
+++ remarks	是	array[]	备注
+++ import-certificate-num	是	array[]	进口证明书号
+++ tax-payment-voucher-no	是	array[]	完整凭税编号
+++ inspection-form-num	是	array[]	商检单号
++++ word	是	string	识别结果字符串，以上各字段均包含
+返回说明-二手车销售发票
+type 的返回结果为 used_vehicle_invoice，即“二手车销售发票”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ invoice_code	是	array[]	发票代码
+++ invoice_num	是	array[]	发票号码
+++ date	是	array[]	开票日期
+++ tax_code	是	array[]	税控码
+++ buyer	是	array[]	买方
+++ buyer_id	是	array[]	买方身份证号
+++ buyer_station	是	array[]	买方地址
+++ buyer_tel	是	array[]	买方电话
+++ saler	是	array[]	卖方
+++ saler_id	是	array[]	卖方身份证号
+++ saler_station	是	array[]	卖方地址
+++ saler_tel	是	array[]	卖方电话
+++ car_plate	是	array[]	车牌号
+++ car_certificate	是	array[]	登记证号
+++ car_class	是	array[]	车辆类型
+++ vin_num	是	array[]	车架号
+++ model	是	array[]	厂牌型号
+++ to_station	是	array[]	转入地车管所名称
+++ big_price	是	array[]	车价合计大写
+++ small_price	是	array[]	车价合计小写
+++ car_market	是	array[]	二手车市场
+++ tax_num	是	array[]	纳税人识别号
+++ tax_location	是	array[]	纳税人地址
+++ tax_tel	是	array[]	纳税人电话
+++ sheet_num	是	array[]	联次
++++ word	是	string	识别结果字符串，以上各字段均包含
+返回说明-网约车行程单
+type 的返回结果为 taxi_online_ticket，即“网约车行程单”时，识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+++ ServiceType	是	array[]	发票消费类型。网约车行程单此字段固定输出：交通
+++ service_provider	是	array[]	服务商
+++ start_time	是	array[]	行程开始时间
+++ destination_time	是	array[]	行程结束时间
+++ phone	是	array[]	行程人手机号
+++ application_date	是	array[]	申请日期
+++ total_fare	是	array[]	总金额
+++ item_num	是	array[]	行程信息中包含的行程数量
++++ word	是	string	识别结果字符串，以上各字段均包含
+++ items	是	array[]	行程信息
++++ item_id	是	array[]	行程信息的对应序号
++++ item_provider	是	array[]	行程信息的对应服务商
++++ pickup_time	是	array[]	上车时间
++++ pickup_date	是	array[]	上车日期
++++ car_type	是	array[]	车型
++++ distance	是	array[]	里程
++++ start_place	是	array[]	起点
++++ destination_place	是	array[]	终点
++++ city	是	array[]	城市
++++ fare	是	array[]	金额
+++++ word	是	string	识别结果字符串，以上各字段均包含
+返回说明-限额发票
+type 的返回结果为 limit_invoice，即“限额发票”时，由于此类型仅支持检测分类，无法识别具体票据内容。识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+words_result	是	object{}	识别结果
++ probability	是	string	表示单张票据分类的置信度
++ left	是	string	表示单张票据定位位置的长方形左上顶点的水平坐标
++ top	是	string	表示单张票据定位位置的长方形左上顶点的垂直坐标
++ width	是	string	表示单张票据定位位置的长方形的宽度
++ height	是	string	表示单张票据定位位置的长方形的高度
++ type	是	string	limit_invoice
+返回说明-购物小票
+type 的返回结果为 shopping_receipt，即“购物小票”时，由于此类型仅支持检测分类，无法识别具体票据内容。识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+words_result	是	object{}	识别结果
++ probability	是	string	表示单张票据分类的置信度
++ left	是	string	表示单张票据定位位置的长方形左上顶点的水平坐标
++ top	是	string	表示单张票据定位位置的长方形左上顶点的垂直坐标
++ width	是	string	表示单张票据定位位置的长方形的宽度
++ height	是	string	表示单张票据定位位置的长方形的高度
++ type	是	string	shopping_receipt
+返回说明-POS小票
+type 的返回结果为 pos_invoice，即“POS小票”时，由于此类型仅支持检测分类，无法识别具体票据内容。识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+words_result	是	object{}	识别结果
++ probability	是	string	表示单张票据分类的置信度
++ left	是	string	表示单张票据定位位置的长方形左上顶点的水平坐标
++ top	是	string	表示单张票据定位位置的长方形左上顶点的垂直坐标
++ width	是	string	表示单张票据定位位置的长方形的宽度
++ height	是	string	表示单张票据定位位置的长方形的高度
++ type	是	string	pos_invoice
+返回说明-其他
+type 的返回结果为 others，即“其他”时，由于此类型仅支持检测分类，无法识别具体票据内容。识别结果的返回字段如下
+
+字段	是否必选	类型	说明
+words_result	是	object{}	识别结果
++ probability	是	string	表示单张票据分类的置信度
++ left	是	string	表示单张票据定位位置的长方形左上顶点的水平坐标
++ top	是	string	表示单张票据定位位置的长方形左上顶点的垂直坐标
++ width	是	string	表示单张票据定位位置的长方形的宽度
++ height	是	string	表示单张票据定位位置的长方形的高度
++ type	是	string	others
+返回说明-验真参数开启
+当验真参数开启（即 verify_parameter=true 时），返回匹配发票验真接口所需的6要素信息
+
+字段	是否必选	类型	说明
+++ invoice_code	是	array[]	发票代码
+++ invoice_num	是	array[]	发票号码
+++ invoice_date	是	array[]	开票日期。返回格式为 YYYYMMDD，例：20210101
+++ invoice_type	是	array[]	发票种类。不同类型发票输出如下结果：
+增值税专用发票：special_vat_invoice
+增值税电子专票：elec_special_vat_invoice
+增值税普通发票：normal_invoice
+增值税普通发票（电子）：elec_normal_invoice
+增值税普通发票（卷式）：roll_normal_invoice
+全电发票（专用发票）：elec_invoice_special
+全电发票（普通发票）：elec_invoice_normal
+通行费增值税电子普通发票：toll_elec_normal_invoice
+货运运输业增值税专用发票：special_freight_transport_invoice
+机动车销售发票：motor_vehicle_invoice
+二手车销售发票：used_vehicle_invoice
+区块链发票：blockchain_invoice
+通用机打电子发票：printed_elec_invoice
+电子发票（铁路电子客票）：elec_train_ticket_invoice
+电子发票（航空运输电子客票行程单）：elec_flight_itinerary_invoice
+++ total_amount	是	array[]	不含税金额
+++ check_code	否	array[]	检验码。如需使用百度的增值税发票验真接口，需提取返回值的后6位后，再传入验真接口
+返回示例
+
+copy code
+{
+    "words_result": [
+        {
+            "type": "vat_invoice",
+            "width": 0,
+            "probability": 0.9980429411,
+            "height": 649,
+            "left": 154,
+            "top": 177,
+            "result": {
+                "AmountInWords": [
+                    {
+                        "word": "叁佰陆拾圆整"
+                    }
+                ],
+                "InvoiceNumConfirm": [
+                    {
+                        "word": "07286261"
+                    }
+                ],
+                "CommodityEndDate": [],
+                "CommodityVehicleType": [],
+                "CommodityStartDate": [],
+                "CommodityPrice": [
+                    {
+                        "row": "1",
+                        "word": "339.62"
+                    }
+                ],
+                "NoteDrawer": [
+                    {
+                        "word": "余佳燕"
+                    }
+                ],
+                "SellerAddress": [],
+                "CommodityNum": [
+                    {
+                        "row": "1",
+                        "word": "1"
+                    }
+                ],
+                "SellerRegisterNum": [
+                    {
+                        "word": "91330106673959654P"
+                    }
+                ],
+                "MachineCode": [],
+                "Remarks": [],
+                "SellerBank": [
+                    {
+                        "word": "招商银行杭州高新支行502905023610702"
+                    }
+                ],
+                "CommodityTaxRate": [
+                    {
+                        "row": "1",
+                        "word": "6%"
+                    }
+                ],
+                "TotalTax": [
+                    {
+                        "word": "20.38"
+                    }
+                ],
+                "InvoiceCodeConfirm": [
+                    {
+                        "word": "3321192130"
+                    }
+                ],
+                "CheckCode": [],
+                "InvoiceCode": [
+                    {
+                        "word": "3321192130"
+                    }
+                ],
+                "InvoiceDate": [
+                    {
+                        "word": "2019年08月28日"
+                    }
+                ],
+                "PurchaserRegisterNum": [
+                    {
+                        "word": "91110911717743469K"
+                    }
+                ],
+                "InvoiceTypeOrg": [
+                    {
+                        "word": "浙江增值税专用发票"
+                    }
+                ],
+                "OnlinePay": [],
+                "Password": [
+                    {
+                        "word": "508>3909>1*>01/-46709-6/3+*7+8>/1*19+7-0**>+58290-6>647-+324865*9*1<*2191/7754/<0>2<838+//5-69--748*<251408<"
+                    }
+                ],
+                "Agent": [
+                    {
+                        "word": "否"
+                    }
+                ],
+                "AmountInFiguers": [
+                    {
+                        "word": "360.00"
+                    }
+                ],
+                "PurchaserBank": [
+                    {
+                        "word": "招商银行北京分行大电路支行866180100210002"
+                    }
+                ],
+                "Checker": [
+                    {
+                        "word": "柳余"
+                    }
+                ],
+                "City": [],
+                "TotalAmount": [
+                    {
+                        "word": "339.62"
+                    }
+                ],
+                "CommodityAmount": [
+                    {
+                        "row": "1",
+                        "word": "339.62"
+                    }
+                ],
+                "PurchaserName": [
+                    {
+                        "word": "百度在线网络技术(北京)有限公司"
+                    }
+                ],
+                "CommodityType": [],
+                "Province": [
+                    {
+                        "word": "浙江"
+                    }
+                ],
+                "InvoiceType": [
+                    {
+                        "word": "专用发票"
+                    }
+                ],
+                "SheetNum": [
+                    {
+                        "word": "第二联：抵扣联"
+                    }
+                ],
+                "PurchaserAddress": [],
+                "CommodityTax": [
+                    {
+                        "row": "1",
+                        "word": "20.38"
+                    }
+                ],
+                "CommodityPlateNum": [],
+                "CommodityUnit": [
+                    {
+                        "row": "1",
+                        "word": "套"
+                    }
+                ],
+                "Payee": [
+                    {
+                        "word": "佳机"
+                    }
+                ],
+                "CommodityName": [
+                    {
+                        "row": "1",
+                        "word": "*信息技术服务*软件服务费"
+                    }
+                ],
+                "SellerName": [
+                    {
+                        "word": "百度智能云"
+                    }
+                ],
+                "InvoiceNum": [
+                    {
+                        "word": "07286261"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "taxi_receipt",
+            "width": 0,
+            "probability": 0.9858493805,
+            "height": 615,
+            "left": 1325,
+            "top": 200,
+            "result": {
+                "PickupTime": [
+                    {
+                        "word": "10:50"
+                    }
+                ],
+                "DropoffTime": [
+                    {
+                        "word": "17:06"
+                    }
+                ],
+                "Time": [
+                    {
+                        "word": "10:50-17:06"
+                    }
+                ],
+                "City": [
+                    {
+                        "word": ""
+                    }
+                ],
+                "FuelOilSurcharge": [
+                    {
+                        "word": "1.00"
+                    }
+                ],
+                "Date": [
+                    {
+                        "word": "2019-03-20"
+                    }
+                ],
+                "Province": [
+                    {
+                        "word": "陕西省"
+                    }
+                ],
+                "CallServiceSurcharge": [
+                    {
+                        "word": "0.00"
+                    }
+                ],
+                "Fare": [
+                    {
+                        "word": "21.10"
+                    }
+                ],
+                "TotalFare": [
+                    {
+                        "word": "22.00"
+                    }
+                ],
+                "TaxiNum": [
+                    {
+                        "word": "AQ6353"
+                    }
+                ],
+                "PricePerkm": [
+                    {
+                        "word": "2.30"
+                    }
+                ],
+                "InvoiceCode": [
+                    {
+                        "word": "161001881016"
+                    }
+                ],
+                "Distance": [
+                    {
+                        "word": "6.0"
+                    }
+                ],
+                "InvoiceNum": [
+                    {
+                        "word": "05070716"
+                    }
+                ],
+                "Location": [
+                    {
+                        "word": "陕西省"
+                    }
+                ]
+            }
+        }
+    ],
+    "words_result_num": 2,
+    "log_id": 1438382953545048984
+}

@@ -1,0 +1,40 @@
+2025-12-07 00:20:05 - INFO - ==================================================
+2025-12-07 00:20:05 - INFO - 启动 李会计凭证识别系统
+2025-12-07 00:20:05 - INFO - 日志级别: DEBUG
+2025-12-07 00:20:05 - INFO - 日志目录: ./logs
+2025-12-07 00:20:05 - INFO - 上传目录: ./uploads
+2025-12-07 00:20:05 - INFO - ==================================================
+INFO:     Started server process [46611]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:60213 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60246 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60255 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60257 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60266 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60268 - "GET /api/health HTTP/1.1" 200 OK
+2025-12-07 00:20:22 - INFO - OCR服务配置成功 - Provider: baidu
+INFO:     127.0.0.1:60287 - "POST /api/config/ocr HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60289 - "GET /api/health HTTP/1.1" 200 OK
+2025-12-07 00:20:23 - INFO - 大模型服务配置成功 - Provider: deepseek, Model: deepseek-chat
+INFO:     127.0.0.1:60294 - "POST /api/config/llm HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60297 - "GET /api/health HTTP/1.1" 200 OK
+2025-12-07 00:20:29 - INFO - 开始批量识别 - 文件数量: 1
+2025-12-07 00:20:29 - INFO - 处理文件 [1/1] - 微信图片_20251206221510_498.jpg
+[OCR] 调用百度OCR接口: https://aip.baidubce.com/rest/2.0/ocr/v1/multiple_invoice
+2025-12-07 00:20:29 - INFO - HTTP Request: POST https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=H9rBK2VvMzYcjZsqsiz3DlYC&client_secret=xeY6MF0X3NMuIN8UWVJnwnYYXHwJKcaA "HTTP/1.1 200 OK"
+2025-12-07 00:20:29 - INFO - HTTP Request: POST https://aip.baidubce.com/rest/2.0/ocr/v1/multiple_invoice?access_token=24.09aa5ad25f0556035cf29a4fcc5abde3.2592000.1767630029.282335-121206984 "HTTP/1.1 200 OK"
+[OCR] 返回数据键: ['words_result', 'words_result_num', 'log_id']
+[OCR] 完整返回数据: {'words_result': [{'top': 0, 'left': 2, 'probability': 0.5766673088, 'width': 1073, 'type': 'others', 'height': 1918}], 'words_result_num': 1, 'log_id': 1997340380709824221}
+[OCR] 调用银行回单专用接口: https://aip.baidubce.com/rest/2.0/ocr/v1/bank_receipt_new
+2025-12-07 00:20:31 - INFO - HTTP Request: POST https://aip.baidubce.com/rest/2.0/ocr/v1/bank_receipt_new?access_token=24.09aa5ad25f0556035cf29a4fcc5abde3.2592000.1767630029.282335-121206984 "HTTP/1.1 200 OK"
+[OCR] 银行回单返回数据: {'words_result_num': 14, 'words_result': {'付款人账号': [{'word': '9915840026295844'}], '交易日期': [{'word': '2025年11月17日'}], '用途': [{'word': ''}], '流水号': [{'word': '124735096-974'}], '摘要': [{'word': ''}], '付款人户名': [{'word': '乐刷支付科技有限公司'}], '小写金额': [{'word': 'CNY3232.80'}], '收款人账号': [{'word': '160467611253'}], '大写金额': [{'word': '人民币肆仟零肆拾陆元肆角'}], '收款人户名': [{'word': '延边延博文创有限公司'}], '标题': [{'word': '国内支付业务收款回单'}], '回单编号': [{'word': ''}], '付款人开户银行': [{'word': '中国银联股份有限公司'}], '收款人开户银行': [{'word': '中国银行延吉延河路支行'}]}, 'log_id': 1997340382828667307}
+2025-12-07 00:20:31 - INFO - HTTP Request: POST https://api.deepseek.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-07 00:20:43 - INFO - [批量 1/1] 识别成功 - 微信图片_20251206221510_498.jpg, 分录数: 2, 耗时: 14.85s
+2025-12-07 00:20:43 - INFO - 批量识别完成 - 总数: 1, 成功: 1, 失败: 0, 总耗时: 14.85s, 平均: 14.85s/文件
+INFO:     127.0.0.1:60310 - "POST /api/recognize/batch HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60347 - "GET /api/uploads/bcf5a75340f04291b1e8530e9a0e7b9a.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60352 - "GET /api/uploads/bcf5a75340f04291b1e8530e9a0e7b9a.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60355 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60410 - "GET /api/health HTTP/1.1" 200 OK
