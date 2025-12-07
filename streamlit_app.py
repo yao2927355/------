@@ -48,6 +48,8 @@ if "ocr_config" not in st.session_state:
         st.session_state.ocr_config = {}
 if "llm_config" not in st.session_state:
     st.session_state.llm_config = {}
+if "password_error" not in st.session_state:
+    st.session_state.password_error = False
 
 # 密码验证
 def check_password():
@@ -55,22 +57,26 @@ def check_password():
     if st.session_state.authenticated:
         return True
     
-    with st.container():
-        st.title("🔒 李会计凭证识别系统")
-        st.markdown("---")
-        
-        password = st.text_input("请输入密码", type="password", key="password_input")
-        
-        col1, col2 = st.columns([1, 4])
-        with col1:
-            if st.button("验证", type="primary", use_container_width=True):
-                if password == APP_PASSWORD:
-                    st.session_state.authenticated = True
-                    st.rerun()
-                else:
-                    st.error("密码错误，请重新输入")
-        
-        return False
+    st.title("🔒 李会计凭证识别系统")
+    st.markdown("---")
+    
+    password = st.text_input("请输入密码", type="password", key="password_input")
+    
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        if st.button("验证", type="primary", use_container_width=True, key="verify_btn"):
+            if password == APP_PASSWORD:
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("密码错误，请重新输入")
+                st.session_state.password_error = True
+    
+    # 显示错误信息（如果之前有错误）
+    if st.session_state.get("password_error", False) and not password:
+        st.session_state.password_error = False
+    
+    return False
 
 # 主应用
 def main():
@@ -235,10 +241,23 @@ def result_page():
     
     st.markdown("---")
     
-    # 导出Excel按钮
+    # 导出Excel区域
     if success_count > 0:
-        if st.button("📥 导出Excel", type="primary"):
-            export_excel(results)
+        # 如果已生成Excel文件，直接显示下载按钮
+        if "excel_file" in st.session_state and st.session_state.excel_file:
+            st.download_button(
+                label="📥 下载Excel文件",
+                data=st.session_state.excel_file,
+                file_name=st.session_state.excel_filename,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key="download_excel_file",
+                type="primary"
+            )
+        else:
+            # 如果还没有生成，显示生成按钮
+            if st.button("📥 生成并下载Excel", type="primary", key="export_excel_btn"):
+                export_excel(results)
+                st.rerun()
     
     # 结果表格
     st.subheader("识别结果列表")
@@ -266,7 +285,7 @@ def result_page():
     st.markdown("---")
     st.subheader("凭证详情")
     
-    selected_idx = st.selectbox("选择要查看的凭证", range(len(results)), format_func=lambda x: results[x]["filename"])
+    selected_idx = st.selectbox("选择要查看的凭证", range(len(results)), format_func=lambda x: results[x]["filename"], key="result_selectbox")
     
     if selected_idx is not None:
         result = results[selected_idx]
@@ -316,14 +335,10 @@ def export_excel(results: List):
         excel_service = ExcelService()
         excel_bytes = excel_service.generate_excel(vouchers)
         
-        # 下载
-        st.download_button(
-            label="📥 下载Excel文件",
-            data=excel_bytes,
-            file_name=f"凭证导出_{time.strftime('%Y%m%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            key="download_excel"
-        )
+        # 将文件保存到session state，然后在页面中显示下载按钮
+        st.session_state.excel_file = excel_bytes
+        st.session_state.excel_filename = f"凭证导出_{time.strftime('%Y%m%d')}.xlsx"
+        st.success("✅ Excel文件已生成！请点击下方的下载按钮")
         
     except Exception as e:
         st.error(f"导出失败: {str(e)}")
